@@ -130,7 +130,7 @@ IO_CONNECTIONS  IoConns[] = {
 
 #define SERIAL_BAUD_RATE    115200 // mostly for debugging output
 
-#define DEBUG
+//#define DEBUG
 
 
 #ifdef DEBUG
