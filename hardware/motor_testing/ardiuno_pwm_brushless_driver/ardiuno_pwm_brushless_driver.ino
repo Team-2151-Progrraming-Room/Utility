@@ -55,8 +55,8 @@
 // The other two inputs we are using are set to analog inputs and connect to the center wipers of the pots for our variable
 // inputs and can be read just like any other analog input
 
-#define POT_RIGHT       A3
-#define POT_LEFT        A2
+#define POT_RIGHT       A2
+#define POT_LEFT        A3
 #define POT_GND         A5
 #define POT_5V          A0
 
@@ -233,7 +233,7 @@ void loop() {
     Serial.print(IoConns[i].motorSpeedPin);
     Serial.print(" is ");
     Serial.print(speedRead);
-    Serial.print("(R ");
+    Serial.print(" (R ");
     Serial.print(revRead);
     Serial.print(" / F ");
     Serial.print(fwdRead);
