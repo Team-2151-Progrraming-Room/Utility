@@ -78,10 +78,10 @@
 //
 // A pull down voltage is provided to the direction switches using a digital output set to logical 0 (the DIR_GND pin).
 
-#define FWD_RIGHT       3      // these are all pin numbers
-#define REV_RIGHT       4
-#define FWD_LEFT        5
-#define REV_LEFT        6
+#define REV_RIGHT       3      // these are all pin numbers
+#define FWD_RIGHT       4
+#define REV_LEFT        5
+#define FWD_LEFT        6
 #define DIR_GND         7
 
 
@@ -130,8 +130,14 @@ IO_CONNECTIONS  IoConns[] = {
 
 #define SERIAL_BAUD_RATE    115200 // mostly for debugging output
 
+#define DEBUG
 
+
+#ifdef DEBUG
+#define PER_LOOP_PAUSE      1000  // slow down is we're debugging to be able to read the output easier
+#else
 #define PER_LOOP_PAUSE      0     // if needed in case the PWM needs time to stabilize
+#endif
 
 
 
@@ -212,8 +218,19 @@ void loop() {
     }
 
 #ifdef DEBUG        // test output only if DEBUG is set - show before we set
+    switch (i) {
+      
+      case 0:
+              Serial.print("R: ");
+              break;
+              
+      case 1:
+              Serial.print("L: ");
+              break;
+    }
+    
     Serial.print("Speed value for ");
-    Serial.print(IoConns[i].motorSpeed);
+    Serial.print(IoConns[i].motorSpeedPin);
     Serial.print(" is ");
     Serial.print(speedRead);
     Serial.print("(R ");
@@ -223,7 +240,7 @@ void loop() {
     Serial.println(")");
     
     Serial.print("Servo value for ");
-    Serial.print(IoConns[i].motorPwm);
+    Serial.print(IoConns[i].motorPwmPin);
     Serial.print(" is ");
     Serial.println(servoVal);   
 #endif
