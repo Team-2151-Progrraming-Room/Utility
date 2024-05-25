@@ -88,15 +88,24 @@
 // The motors respond to a servo-style pwm signal based on the angle,  An "angle" of 90 degrees (midpoint) is a stop indication
 // to the motor.  An angle of 0 degrees is full reverese and an angle of 180 degrees is be full forward
 //
-// depending on the reading from the pot, the appropriate angle corresponding to the speed will be set.  For our controller, the
+// Depending on the reading from the pot, the appropriate angle corresponding to the speed will be set.  For our controller, the
 // speed and direction are control are distinct - rocker switches specify the direction and the pots provide the speed so the full range
 // of motion for the pots can be used for speed control
 //
-// even though the motors are not technically servos, we use the servo class to generate the pwm signals
+// Even though the motors are not technically servos, we use the servo class to generate the pwm signals
+//
+// Depending on the specific arduino, some tuning might be in order depending on the crystal quality mostly (I'm assuming)
+//
+// The values below are tuned to hit 1,500usec at the midpoint - our measured adjustment factor is 2.2% to the fast side
+// and since the degree are specified as an integre, round to the nearest whole number.
+//
+// The values also put a 6 degree floor on the reverse direction - some motors, notably the Kraken X60, seemed to not like
+// the "full" reverse value would actually stop the motor.  Others like the SparkMAX seemed to tolerate that better.  All
+// motors tested seem to be happy with these values
 
-#define SERVO_FULL_REV    0   // corresponds to 0 degrees
-#define SERVO_STOP        90  // mid point
-#define SERVO_FULL_FWD    180 // max servo PWM value
+#define SERVO_FULL_REV    5   // corresponds to 0 degrees
+#define SERVO_STOP        92  // mid point - perfect is 90
+#define SERVO_FULL_FWD    180 // max servo PWM value - perfect is 180
 
 #define PWM_LEFT          10  // left motor PWM output pin
 #define PWM_RIGHT         11  // right motor PWM output pin
