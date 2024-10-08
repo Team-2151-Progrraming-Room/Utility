@@ -17,6 +17,9 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.sim.PhysicsSim;
 
+import edu.wpi.first.math.MathUtil;
+
+
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -40,7 +43,7 @@ public class Robot extends TimedRobot {
   private final Mechanisms m_mechanisms = new Mechanisms();
 
   private static double m_desiredRotationsPerSecond = 0.0;
-  private static double m_tolerance = 20.0;
+  private static double m_tolerance = 40.0;
 
   private static TalonFXConfiguration m_configs;
 
@@ -53,10 +56,10 @@ public class Robot extends TimedRobot {
     m_configs = new TalonFXConfiguration();
 
     /* Voltage-based velocity requires a velocity feed forward to account for the back-emf of the motor */
-    m_configs.Slot0.kS = 0.1; // To account for friction, add 0.1 V of static feedforward
+    m_configs.Slot0.kS = 0.01; // To account for friction, add 0.1 V of static feedforward
     m_configs.Slot0.kV = 0.12; // Kraken X60 is a 500 kV motor, 500 rpm per V = 8.333 rps per V, 1/8.33 = 0.12 volts / rotation per second
     m_configs.Slot0.kP = 0.11; // An error of 1 rotation per second results in 0.11 V output
-    m_configs.Slot0.kI = 0; // No output for integrated error
+    m_configs.Slot0.kI = 0.09; // No output for integrated error
     m_configs.Slot0.kD = 0; // No output for error derivative
     // Peak output of 8 volts
     m_configs.Voltage.PeakForwardVoltage = 8;
@@ -96,14 +99,14 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
     m_mechanisms.update(m_fx.getPosition(), m_fx.getVelocity());
 
-    double currentSpeed = m_fx.getVelocity().getValueAsDouble();
+    double currentSpeed = m_fx.getVelocity().getValueAsDouble();      // revs per second!
 
-    SmartDashboard.putNumber("RPM", currentSpeed);
-    SmartDashboard.putNumber("Diff", m_desiredRotationsPerSecond - currentSpeed);
-    SmartDashboard.putNumber("Diff %", m_desiredRotationsPerSecond / (m_desiredRotationsPerSecond - currentSpeed) * 100);
+    SmartDashboard.putNumber("RPM", currentSpeed * 60);
+    SmartDashboard.putNumber("Diff", (currentSpeed - m_desiredRotationsPerSecond) * 60);
+    SmartDashboard.putNumber("Diff %", (m_desiredRotationsPerSecond - currentSpeed) / m_desiredRotationsPerSecond * 100);
     SmartDashboard.putNumber("Tolerance", m_tolerance);
 
-    if (Math.abs(m_desiredRotationsPerSecond - currentSpeed) <= m_tolerance) {
+    if (MathUtil.isNear(m_desiredRotationsPerSecond, currentSpeed, m_tolerance / 60.0)) {    // velocities are in RPS and tolerance is in RPM
       SmartDashboard.putBoolean("Ready", true);
     } else {
       SmartDashboard.putBoolean("Ready", false);
@@ -130,7 +133,7 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putNumber("Joystick", joyValue);
     */
-    m_desiredRotationsPerSecond = SmartDashboard.getNumber("SetPoint", 0);
+    m_desiredRotationsPerSecond = SmartDashboard.getNumber("SetPoint", 0) / 60;
 
     if (m_joystick.getLeftBumper()) {
       /* Use velocity voltage */
