@@ -65,6 +65,7 @@
 #define POT_GND         A5
 #define POT_5V          A0
 
+
 // The PWM outputs from the overall rig are wired so that they can be used to drive actual servos.  When using in this manner,
 // the direction switches control which 90 degree quadrant the servo moves in with the speed pot controlling the actual servo angle.
 // The PWM outputs are spread across two connectors; one which provides an actual GND connection as well as regulated 5V output
@@ -72,6 +73,7 @@
  
 #define PWM_OUT_RIGHT   11    // these are all I/O pin numbers
 #define PWM_OUT_LEFT    10
+
 
 // the direction inputs are all distinct - this allows us to detect a switch setting that indicates either forward or
 // backward as well as differentiating the "stopped" condition where no direction is selected (see the truth table above)
@@ -91,7 +93,7 @@
 
 
 // The motors respond to a servo-style pwm signal based on the angle.  An "angle" of 90 degrees (midpoint) is a stop indication
-// to the motor.  An angle of 0 degrees is full reverese and an angle of 180 degrees is be full forward.
+// to the motor.  An angle of 0 degrees is full reverse and an angle of 180 degrees is full forward.
 //
 // Depending on the reading from the pot, the appropriate angle corresponding to the speed will be set.  For our controller, the
 // speed and direction are control are distinct - rocker switches specify the direction and the pots provide the speed so the full range
@@ -111,19 +113,18 @@
 // shorter than 1ms and the full forward pulse width should be no longer than 2ms).  Values outside of these ranges
 // may cause the motor controller to stop the motor due to out-of-tolerance control inputs.
 //
-// The values also put a 6 degree floor on the reverse direction - some motors, notably the Kraken X60, seemed to not like
-// the "full" reverse value would actually stop the motor.  Others like the SparkMAX seemed to tolerate that better.  All
-// motors tested seem to be happy with these values
+// The values below were measured using a oscilloscope and tuned to swing between 1.0 and just under 2.0ms (just under
+// since the full reading from the potentiometers was 1020 rather than the theoretical maximum value of 1023).
 
-#define SERVO_FULL_REV    5   // corresponds to 0 degrees
-#define SERVO_STOP        92  // mid point - perfect is 90
-#define SERVO_FULL_FWD    180 // max servo PWM value - perfect is 180
+#define SERVO_FULL_REV    45  // corresponds to 0 degrees
+#define SERVO_STOP        93  // mid point - perfect is 90
+#define SERVO_FULL_FWD    142 // max servo PWM value - perfect is 180
 
 #define PWM_LEFT          10  // left motor PWM output pin
 #define PWM_RIGHT         11  // right motor PWM output pin
 
 #define A2D_MIN           0   //  minimum value we would read from an analog input
-#define A2D_MAX           1023 // maximum value we woudl read from an analog input (10 bits or 2^10)
+#define A2D_MAX           1023 // maximum value we would read from an analog input (10 bits or 2^10)
 
 #define A2D_STOP_BAND     5   // a reading below this should be treated as stopped - just in case the pot doesn't fully hit 0
 
@@ -151,7 +152,7 @@ IO_CONNECTIONS  IoConns[] = {
 
 #define SERIAL_BAUD_RATE    115200 // mostly for debugging output
 
-//#define DEBUG
+// #define DEBUG
 
 
 #ifdef DEBUG
@@ -207,7 +208,7 @@ void setup() {
 // to run at
 //
 // Once we've processed all the defined motor controllers, the function exits and the arduino environment
-// re-runs this function starting everythnig over.
+// re-runs this function starting everything over.
 
 void loop() {
   
@@ -221,7 +222,9 @@ void loop() {
     if ((fwdRead == HIGH && revRead == HIGH) ||     // no direction selected
         (fwdRead == LOW  && revRead == LOW)) {      // invalid state - STOP!    
 
-      servoVal = SERVO_STOP;
+      servoVal  = SERVO_STOP;
+
+      speedRead = 0;    // set to min speed for nicer debug output
 
     } else {
 
