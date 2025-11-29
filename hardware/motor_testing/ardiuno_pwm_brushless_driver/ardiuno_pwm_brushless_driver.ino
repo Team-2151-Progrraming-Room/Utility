@@ -8,7 +8,7 @@
 // on the servo angle set:
 //
 //      * 0-90 degrees correspond to full reverse to stopped respectively
-//      * 90 degrees corresond to stopped
+//      * 90 degrees correspond to stopped
 //      * 90-180 degrees correspond to stopped to full forward repectively
 //
 // (see the motor controller docs for more details)
