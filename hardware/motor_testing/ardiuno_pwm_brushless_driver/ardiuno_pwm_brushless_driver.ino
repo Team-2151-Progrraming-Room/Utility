@@ -28,7 +28,7 @@
 //
 //       FWD_* input   REV_* input   Motor Direction
 //
-//       HJGH          HIGH          No direction selected - motor is stopped
+//       HIGH          HIGH          No direction selected - motor is stopped
 //
 //       LOW           HIGH          Forward
 //
@@ -70,9 +70,6 @@
 // the direction switches control which 90 degree quadrant the servo moves in with the speed pot controlling the actual servo angle.
 // The PWM outputs are spread across two connectors; one which provides an actual GND connection as well as regulated 5V output
 // from the arduino with a pair of PWM-capable outputs driving the actual servo or motor controller inputs.
- 
-#define PWM_OUT_RIGHT   11    // these are all I/O pin numbers
-#define PWM_OUT_LEFT    10
 
 
 // the direction inputs are all distinct - this allows us to detect a switch setting that indicates either forward or
@@ -88,7 +85,7 @@
 #define REV_RIGHT       3      // these are all I/O pin numbers
 #define FWD_RIGHT       4
 #define REV_LEFT        5
-#define FWD_LEFT        6
+#define FWD_LEFT        8
 #define DIR_GND         7
 
 
@@ -121,7 +118,9 @@
 #define SERVO_FULL_FWD    142 // max servo PWM value - perfect is 180
 
 #define PWM_LEFT          10  // left motor PWM output pin
+#define PWM_LEFT_REV       6  // left motor PWM reverse output pin
 #define PWM_RIGHT         11  // right motor PWM output pin
+#define PWM_RIGHT_REV      9  // right motor PWM reverse output pin
 
 #define A2D_MIN           0   //  minimum value we would read from an analog input
 #define A2D_MAX           1023 // maximum value we would read from an analog input (10 bits or 2^10)
@@ -137,22 +136,24 @@
 
 typedef struct {
   int   motorSpeedPin;      // analog speed input pin
-  int   motorPwmPin;        // PWM output pin
+  int   motorPwmPin;        // PWM primary output pin
+  int   motorPwmRevPin;     // PWM reverse (complimentary) output pin
   int   motorDirFwd;        // forward direction pin
   int   motorDirRev;        // reverse direction pin
-  Servo servo;              // servo object to be able to set various PWM "angles" for direction and speed
+  Servo servoPrimary;       // servo object to be able to set various PWM "angles" for direction and speed
+  Servo servoRev;           // reverse direction servo object
 } IO_CONNECTIONS;
 
 
 IO_CONNECTIONS  IoConns[] = {
-  { POT_RIGHT, PWM_RIGHT, FWD_RIGHT, REV_RIGHT },
-  { POT_LEFT,  PWM_LEFT,  FWD_LEFT,  REV_LEFT },
+  { POT_RIGHT, PWM_RIGHT, PWM_RIGHT_REV, FWD_RIGHT, REV_RIGHT },
+  { POT_LEFT,  PWM_LEFT,  PWM_LEFT_REV, FWD_LEFT,  REV_LEFT },
 };
 
 
 #define SERIAL_BAUD_RATE    115200 // mostly for debugging output
 
-// #define DEBUG
+#define DEBUG
 
 
 #ifdef DEBUG
@@ -192,7 +193,9 @@ void setup() {
     pinMode(IoConns[i].motorDirFwd, INPUT_PULLUP);               // set direction pins as inputs with pullups enabled
     pinMode(IoConns[i].motorDirRev, INPUT_PULLUP);
     pinMode(IoConns[i].motorPwmPin, OUTPUT);                     // set the pwm pin as output
-    IoConns[i].servo.attach(IoConns[i].motorPwmPin);             // associate a servo controller with the pwm pin
+    pinMode(IoConns[i].motorPwmRevPin, OUTPUT);                  // set the pwm reverse pin as output
+    IoConns[i].servoPrimary.attach(IoConns[i].motorPwmPin);      // associate primary servo controller with the pwm pin
+    IoConns[i].servoRev.attach(IoConns[i].motorPwmRevPin);       // associate reverse servo controller with the pwm pin
   }
 }
 
@@ -212,7 +215,7 @@ void setup() {
 
 void loop() {
   
-  int i, speedRead, fwdRead, revRead, servoVal;
+  int i, speedRead, fwdRead, revRead, servoPrimaryVal, servoRevVal;
 
   for (i = 0 ; i < (sizeof(IoConns)/sizeof(IoConns[0])) ; i++) {
 
@@ -222,7 +225,8 @@ void loop() {
     if ((fwdRead == HIGH && revRead == HIGH) ||     // no direction selected
         (fwdRead == LOW  && revRead == LOW)) {      // invalid state - STOP!    
 
-      servoVal  = SERVO_STOP;
+      servoPrimaryVal  = SERVO_STOP;
+      servoRevVal      = SERVO_STOP;
 
       speedRead = 0;    // set to min speed for nicer debug output
 
@@ -235,9 +239,11 @@ void loop() {
       }
 
       if (fwdRead == LOW) {                         // map forward
-        servoVal = map(speedRead, A2D_MIN, A2D_MAX, SERVO_STOP, SERVO_FULL_FWD);
+        servoPrimaryVal = map(speedRead, A2D_MIN, A2D_MAX, SERVO_STOP, SERVO_FULL_FWD);    // primary pin
+        servoRevVal     = map(speedRead, A2D_MIN, A2D_MAX, SERVO_STOP, SERVO_FULL_REV);    // reversed pin
       } else {                                      // else backward
-        servoVal = map(speedRead, A2D_MIN, A2D_MAX, SERVO_STOP, SERVO_FULL_REV);
+        servoPrimaryVal = map(speedRead, A2D_MIN, A2D_MAX, SERVO_STOP, SERVO_FULL_REV);
+        servoRevVal     = map(speedRead, A2D_MIN, A2D_MAX, SERVO_STOP, SERVO_FULL_FWD);
       }
     }
 
@@ -263,14 +269,21 @@ void loop() {
     Serial.print(fwdRead);
     Serial.println(")");
     
-    Serial.print("Servo value for ");
+    Serial.print("Servo value for primary ");
     Serial.print(IoConns[i].motorPwmPin);
     Serial.print(" is ");
-    Serial.println(servoVal);   
+    Serial.println(servoPrimaryVal);
+
+    Serial.print("Servo value for reverse ");
+    Serial.print(IoConns[i].motorPwmRevPin);
+    Serial.print(" is ");
+    Serial.println(servoRevVal);
 #endif
 
-    IoConns[i].servo.write(servoVal);   // set the actual speed and direction for the motor
+    IoConns[i].servoPrimary.write(servoPrimaryVal);   // set the actual speed and direction for the motor
+    IoConns[i].servoRev.write(servoRevVal);           // set the reverse pin
   }
 
   delay(PER_LOOP_PAUSE);                // give things a chance to settle...
+
 }
