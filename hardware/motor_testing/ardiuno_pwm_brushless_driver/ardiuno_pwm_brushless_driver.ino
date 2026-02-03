@@ -113,7 +113,7 @@
 // The values below were measured using a oscilloscope and tuned to swing between 1.0 and just under 2.0ms (just under
 // since the full reading from the potentiometers was 1020 rather than the theoretical maximum value of 1023).
 
-#define SERVO_FULL_REV    45  // corresponds to 0 degrees
+#define SERVO_FULL_REV    43  // corresponds to 0 degrees
 #define SERVO_STOP        93  // mid point - perfect is 90
 #define SERVO_FULL_FWD    142 // max servo PWM value - perfect is 180
 
@@ -153,7 +153,7 @@ IO_CONNECTIONS  IoConns[] = {
 
 #define SERIAL_BAUD_RATE    115200 // mostly for debugging output
 
-#define DEBUG
+// #define DEBUG
 
 
 #ifdef DEBUG
